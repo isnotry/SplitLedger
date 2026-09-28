@@ -1,0 +1,1079 @@
+<!doctype html>
+<html lang="zh-CN" data-page-node-id="cqtq5HDNJvBmhaBarUixeB">
+<head data-page-node-id="VAH7sfLa80ppLOh4hOc7SD">
+<meta charset="UTF-8" data-page-node-id="DhOaQqMajjVjxUfP5b9DXw" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="9YOBhTIFUHhEJCIP7PrFpd" />
+<title>记账分摊 · 一行一句，自动累加</title>
+<meta name="description" content="一行一句话加一个数字就能记账：自动识别每行金额、实时合计与收支统计，再一键算清 AA 谁该给谁。支持中英双语切换、CSV 与图片导出，数据只存在本机浏览器。" data-page-node-id="8xhYpq8YpjVkFD7DP5fY4r" />
+<meta name="theme-color" content="#2563eb" data-page-node-id="yejeIpBB7hBR1A0eGJyfSx" />
+<meta property="og:title" content="记账分摊 · 一行一句，自动累加" data-page-node-id="vW0jhOxhKJDxN3PfgAI0Yt" />
+<meta property="og:description" content="一行一句话加一个数字就能记账：自动识别金额、实时合计、一键算清 AA 谁该给谁，支持中英双语与 CSV/图片导出。" data-page-node-id="X1CxatD3cOB5oJmixTidtV" />
+<meta property="og:type" content="website" data-page-node-id="QHB9LWrZxtQSvf6qbbZroj" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ctext x='32' y='45' font-size='40' font-family='Helvetica,Arial,sans-serif' font-weight='700' text-anchor='middle' fill='%23ffffff'%3E%C2%A5%3C/text%3E%3C/svg%3E" data-page-node-id="ZSl8mdxT1rrqrW86mWVMJ1" />
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #1f2328;
+    --muted: #6b7280;
+    --border: #e3e6ea;
+    --accent: #2563eb;
+    --accent-soft: #eaf1fe;
+    --out: #d92d20;      /* 支出：红 */
+    --in: #0f9d58;       /* 收入：绿 */
+    --warn-bg: #fff7e6;
+    --warn-text: #94620a;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --card: #1b1e24;
+      --text: #e6e8eb;
+      --muted: #9aa3ad;
+      --border: #2b3038;
+      --accent: #5b95f6;
+      --accent-soft: #1e2a3d;
+      --out: #ff6369;
+      --in: #3dd68c;
+      --warn-bg: #2a2418;
+      --warn-text: #e0b64f;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 20px 48px; }
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .hd-main { min-width: 0; }
+  header h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .5px; }
+  header .sub { margin: 0; color: var(--muted); font-size: 13px; }
+  /* 语言切换：右上角两枚国旗，当前语言高亮 */
+  .langsw {
+    flex: 0 0 auto; display: inline-flex; gap: 2px; padding: 3px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+  .langsw .lang {
+    width: 32px; height: 26px; padding: 0; border: 0; border-radius: 7px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; font-size: 15px; line-height: 1;
+    opacity: .5; transition: opacity .15s;
+  }
+  .langsw .lang:hover { opacity: 1; }
+  .langsw .lang.on { background: var(--accent-soft); opacity: 1; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 18px 0 14px; }
+  .spacer { flex: 1 1 auto; }
+  button, select {
+    font: inherit; font-size: 13px;
+    background: var(--card); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 12px; cursor: pointer; height: 32px;
+  }
+  button:hover, select:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { filter: brightness(1.08); color: #fff; }
+  .danger:hover { border-color: var(--out); color: var(--out); }
+  label.inline { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+
+  .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: var(--shadow); padding: 16px;
+  }
+  .card h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 10px; letter-spacing: .3px; }
+  textarea {
+    width: 100%; min-height: 300px; resize: vertical;
+    font: 14px/1.9 ui-monospace, SFMono-Regular, Menlo, Consolas, "PingFang SC", monospace;
+    color: var(--text); background: transparent;
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+    outline: none;
+  }
+  textarea:focus { border-color: var(--accent); }
+  .hint { margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .hint code { background: var(--accent-soft); color: var(--accent); padding: 1px 5px; border-radius: 4px; }
+
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow); }
+  .stat .k { font-size: 12px; color: var(--muted); }
+  .stat .v { font-size: 22px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .stat.total { grid-column: 1 / -1; }
+  .stat.total .v { font-size: 32px; }
+  .out { color: var(--out); }
+  .in { color: var(--in); }
+
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  td.num, th.num { text-align: right; }
+  /* 列宽写在 CSS 里（不是行内 style），窄屏才覆盖得动 */
+  th.col-idx { width: 52px; }
+  th.col-amt { width: 104px; }
+  th.col-ops { width: 64px; }
+  tr.no-num td { color: var(--muted); }
+  .empty { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; }
+
+  /* 结算（AA 平摊） */
+  .settle { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .settle-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .settle-title { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .6px; }
+  .paid { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--muted); font-size: 12px; }
+  .paid input {
+    width: 106px; height: 30px; padding: 4px 9px; text-align: right;
+    font: inherit; font-size: 13px; font-variant-numeric: tabular-nums;
+    color: var(--text); background: transparent;
+    border: 1px solid var(--border); border-radius: 8px; outline: none;
+  }
+  .paid input:focus { border-color: var(--accent); }
+  .settle-out { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 12px 0 2px; }
+  .settle-out .so-label { color: var(--muted); font-size: 12px; }
+  .settle-out .so-amt { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .settle-fx { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
+  .fx-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 12px; }
+  /* 92px = 英文最长标签「Your net outlay」的实测宽度，保证标签不换行、数值列对齐 */
+  .fx-k { flex: 0 0 92px; color: var(--muted); white-space: nowrap; }
+  .fx-v { flex: 0 0 auto; min-width: 76px; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .fx-exp { color: var(--muted); }
+
+  tr.sec td {
+    padding: 16px 10px 6px; border-bottom: 0;
+    color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .6px;
+  }
+  tbody tr.sec:first-child td { padding-top: 6px; }
+  tr.trow td { border-bottom: 0; border-top: 1px solid var(--border); padding-top: 10px; font-weight: 600; }
+  tr.trow td:first-child { color: var(--muted); font-size: 12px; letter-spacing: .6px; }
+  tr.trow td.ops button { font-weight: 400; }
+  tr.srow td { vertical-align: middle; }
+  tr.srow .stitle { font-weight: 600; font-size: 13px; word-break: break-word; }
+  tr.srow .smeta { margin-right: 8px; color: var(--muted); font-size: 12px; font-weight: 400; }
+  td.ops { text-align: right; white-space: nowrap; }
+  td.ops button { height: 24px; padding: 2px 8px; font-size: 12px; }
+  footer { margin-top: 18px; font-size: 12px; color: var(--muted); text-align: center; }
+  .toast {
+    position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(8px);
+    background: var(--text); color: var(--card); padding: 8px 16px; border-radius: 8px;
+    font-size: 13px; opacity: 0; pointer-events: none; transition: .18s;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* 导出菜单：一个「导出」按钮，点开选「导出图片 / 导出 CSV」 */
+  .drop { position: relative; display: inline-flex; }
+  .drop.open > button { border-color: var(--accent); color: var(--accent); }
+  .menu {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 20;
+    display: none; flex-direction: column; gap: 2px;
+    min-width: 136px; padding: 4px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+  .menu.open { display: flex; }
+  .menu button {
+    height: 30px; padding: 4px 10px; border: 0; border-radius: 6px;
+    background: transparent; text-align: left; white-space: nowrap;
+  }
+  .menu button:hover { background: var(--accent-soft); border-color: transparent; }
+
+  /* ------------------------- 窄屏（手机）适配 ------------------------- */
+  @media (max-width: 600px) {
+    .wrap { padding: 16px 12px 40px; }
+    header h1 { font-size: 18px; }
+    header .sub { font-size: 12px; }
+    .card { padding: 12px; }
+    .toolbar { gap: 6px; margin: 14px 0 12px; }
+    button, select { padding: 6px 10px; }
+    textarea { min-height: 190px; padding: 10px; }
+    th, td { padding: 8px 6px; }
+    th { font-size: 11px; }
+    /* 收紧固定列，把宽度让给摘要 */
+    th.col-idx { width: 34px; }
+    th.col-amt { width: 96px; }
+    th.col-ops { width: 58px; }
+    tbody td:first-child { font-size: 12px; }
+    tr.sec td { padding: 14px 6px 4px; }
+    tr.trow td { padding-top: 8px; }
+    td.ops button { height: 22px; padding: 2px 6px; font-size: 11px; }
+    /* 已保存行：时间单独占一行，不再和摘要挤在一起 */
+    tr.srow .smeta { display: block; margin: 0 0 1px; font-size: 11px; }
+    tr.srow .stitle { display: block; }
+    .stat { padding: 12px 14px; }
+    .stat .v { font-size: 20px; }
+    .stat.total .v { font-size: 26px; }
+    /* 结算：已付输入框独占一行 */
+    .paid { margin-left: 0; width: 100%; justify-content: space-between; }
+    .paid input { width: 116px; }
+    .settle-out .so-amt { font-size: 18px; }
+    /* 窄屏把公式拆成两行：第一行「名称 … 数值」（数值右对齐，与主表格同构），第二行算式整行铺开 */
+    .settle-fx { row-gap: 4px; }
+    .fx-row { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; row-gap: 1px; }
+    .fx-k { flex: none; }
+    .fx-v { flex: none; min-width: 0; }
+    .fx-exp { grid-column: 1 / -1; }
+    .hint { font-size: 11px; }
+  }
+  /* 触屏没有真 hover，避免点完按钮样式粘住 */
+  @media (hover: none) {
+    button:hover, select:hover { border-color: var(--border); color: var(--text); }
+    button.primary:hover { filter: none; }
+    .menu button:hover { background: transparent; }
+  }
+</style>
+</head>
+<body data-page-node-id="GVRNSMlk3CVSMPw9YSJsdF">
+<div class="wrap" data-page-node-id="1INnCFEKxJBNg2lL32N7rd">
+  <header data-page-node-id="NQhUMmLPqKb6492auyRait">
+    <div class="hd-main">
+      <h1 data-i18n="appTitle" data-page-node-id="qbjD9Z9PIXqQEnT5glCqrG">记账分摊</h1>
+      <p class="sub" data-i18n="subtitle" data-page-node-id="JHpsi5VfLeZAhmlfJqG8pO">每行一句话 + 一个数字，自动累加。数据只存在你这台浏览器里，不上传。</p>
+    </div>
+    <div class="langsw" role="group" aria-label="Language / 语言">
+      <button type="button" class="lang on" data-lang="zh" aria-pressed="true" title="中文">🇨🇳</button>
+      <button type="button" class="lang" data-lang="en" aria-pressed="false" title="English">🇺🇸</button>
+    </div>
+  </header>
+
+  <div class="toolbar" data-page-node-id="TUfCv0GVq8qeB8axyI68Uz">
+    <label class="inline" data-page-node-id="hMezfYKZIzbnkFyvGYhpO6"><span data-i18n="dirLabel" data-page-node-id="mjVcXKXnAi4sC9tJJycluy">无符号数字算作</span>
+      <select id="defaultDir" data-page-node-id="qyGS00jKFVboRU2ycMti8D">
+        <option value="out" data-i18n="optOut" data-page-node-id="510MdgCcXMUAMGyTpbipEi">支出</option>
+        <option value="in" data-i18n="optIn" data-page-node-id="Aici5TEoSGwLycgycBGl8R">收入</option>
+      </select>
+    </label>
+    <button id="btnDemo" data-i18n="demo" data-page-node-id="F9c0nfQ8FoVgCsEHiK90st">填入示例</button>
+    <span class="spacer" data-page-node-id="e6zeB4hvcOMGfOiCrRQfMr"></span>
+    <button id="btnSave" class="primary" data-i18n="save" data-page-node-id="Sc6uF0VIgRTpHcuFPbqx5X">保存</button>
+    <button id="btnCopy" data-i18n="copy" data-page-node-id="GE868EIO9rNvyDXsZNqH99">复制全部</button>
+    <div class="drop" id="exportDrop" data-page-node-id="fYAGE0Qk8U9MEQzbn5DF1A">
+      <button id="btnExport" data-i18n="export" aria-haspopup="menu" aria-expanded="false" data-page-node-id="Ud3PG4QBberLFXEGLZyh4i">导出</button>
+      <div class="menu" id="exportMenu" role="menu" data-page-node-id="1htmyXQlONh2pIYCAFqvPh">
+        <button id="menuImg" role="menuitem" data-i18n="img" data-page-node-id="HS8eIMYeAmCOQWdMN79F7N">导出图片</button>
+        <button id="menuCsv" role="menuitem" data-i18n="csv" data-page-node-id="TMqHDvCEW558Q8FqlnrmcY">导出 CSV</button>
+      </div>
+    </div>
+    <button id="btnClear" class="danger" data-i18n="clear" data-page-node-id="WcY17SDFi6zDzPqmtXz5EN">清空</button>
+  </div>
+
+  <div class="grid" data-page-node-id="4I1XPfG0N262B6BA9SXKaP">
+    <div class="card" data-page-node-id="SflgAV3HKDCRKshCRIUwNb">
+      <h2 data-i18n="editor" data-page-node-id="rmcL13ktLT53WjDIzbVNeB">记一笔（每行一条）</h2>
+      <textarea id="input" spellcheck="false"></textarea>
+      <div class="hint" id="hint" data-page-node-id="uUlDPSOViCDybqqHVWsKjt"></div>
+    </div>
+
+    <div class="stats" data-page-node-id="jAKhr3jaulXjGkavlH4RXw">
+      <div class="stat total" data-page-node-id="uPgb7IHEHuNxYL1ZOE7jdl">
+        <div class="k" data-i18n="total" data-page-node-id="3UxrVyN3l7R1xEjtXdXBI5">合计（净额 = 收入 − 支出）</div>
+        <div class="v" id="sTotal" data-page-node-id="oQEN3NN1SaWAM0YaQYkrjw">¥0.00</div>
+      </div>
+      <div class="stat" data-page-node-id="x6KCX174YxL7t5DaycxujX"><div class="k" data-i18n="income" data-page-node-id="0FeTpmkjHgWnJfTXEpHuoY">收入</div><div class="v in" id="sIn" data-page-node-id="n67LqNHcJ9R8GO8HM5mXwu">¥0.00</div></div>
+      <div class="stat" data-page-node-id="SVx4zSvG4QfDhISV9Q8Gxz"><div class="k" data-i18n="expense" data-page-node-id="LEXD6nlvwD5icPuByZcWSC">支出</div><div class="v out" id="sOut" data-page-node-id="BDAPXPq2yWx4F8GTRAV6FR">¥0.00</div></div>
+      <div class="stat" data-page-node-id="p4KF6awWN99MKQH4ppl9wn"><div class="k" data-i18n="count" data-page-node-id="VjdXsJB4r0pDtRBiWUMa9V">笔数</div><div class="v" id="sCount" data-page-node-id="N5zgavP9PhBHq7sMx9h5iv">0</div></div>
+      <div class="stat" data-page-node-id="irhT1XddKh2lDcM4SDIv4w"><div class="k" data-i18n="skipped" data-page-node-id="TInPlGyxGfqbHq2KRF5a93">未识别行</div><div class="v" id="sSkip" data-page-node-id="gpCG7Sftca6xX30rTRVle5">0</div></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px" data-page-node-id="jiEAaBUEvEElrKZWrqTLhU">
+    <h2 data-i18n="recordTitle" data-page-node-id="OTsaovkFZmC72lL0To4BFl">记录</h2>
+    <table data-page-node-id="2YyP8s2tD1JhhAXJj7vHgX">
+      <thead data-page-node-id="Ea6cwN2NmnqZFvXyTiRyBs"><tr data-page-node-id="9KZiLE3UwyYES02zqI52E6">
+        <th class="col-idx" data-page-node-id="CRXCHmHq0RlNya1ngJMRLD">#</th>
+        <th data-i18n="colDesc" data-page-node-id="f0iKru2zEqsmRCP1OsGCzl">摘要</th>
+        <th class="num col-amt" data-i18n="colAmount" data-page-node-id="vtDUaoaKvBmFxFYzxzpBIg">金额</th>
+        <th class="col-ops" data-page-node-id="Bbu55R9LpRA4hFR9KfmgKH"></th>
+      </tr></thead>
+      <tbody id="rows" data-page-node-id="OLdaWoompOU7i0c5x7DYAq"></tbody>
+    </table>
+    <div class="empty" id="empty" data-page-node-id="FxIGdPAYp7Xih4KhvsBRF3"></div>
+
+    <div class="settle" id="settle" data-page-node-id="zsuCdnWjcFBpvNKz2KlxVH">
+      <div class="settle-top" data-page-node-id="Z7t4qxAzpnBy3HXFffSXXL">
+        <span class="settle-title" data-i18n="settleTitle" data-page-node-id="LBKk5nszVoNZ2gndjiK9WP">AA 结算</span>
+        <label class="paid" data-page-node-id="IRCQ2nrfDLWoh6HCcUytl6">
+          <span data-i18n="paidLabel" data-page-node-id="HAC0jZdOaq2LxkOOTddxQb">TA 已付</span>
+          <input id="paidOther" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0.00" aria-label="TA paid" data-page-node-id="E2YMWEmLbU2BKXcmPQAv9u" />
+        </label>
+      </div>
+      <div class="settle-out" id="settleOut" data-page-node-id="vzPm8irCZ8qk2qzs3szUEh"></div>
+      <div class="settle-fx" id="settleFx" data-page-node-id="cZTF91MKiwR2QE9mdQuwtV"></div>
+    </div>
+  </div>
+
+  <footer data-i18n="footer" data-page-node-id="YSil29v6YHNVVRTwhhF9E2">Ctrl/⌘ + S 直接导出图片 ｜ 改动即时自动保存到 localStorage</footer>
+</div>
+<div class="toast" id="toast" data-page-node-id="Ng7kss1OSBlzPGPQFtiGax"></div>
+
+<script>
+/* --- core:start --- */
+/** 全角/中文标点归一化，让中文输入法下随手打出来的数字也能识别 */
+function normalize(line) {
+  return String(line)
+    .replace(/[\uFF10-\uFF19]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)) // ０-９
+    .replace(/\uFF0E/g, '.')   // ．
+    .replace(/\uFF0C/g, ',')   // ，
+    .replace(/\uFF0B/g, '+')   // ＋
+    .replace(/[\uFF0D\u2013\u2014]/g, '-'); // － – —
+}
+
+/** 取一行里最后一个数字（支持 +/-、千分位、小数），返回 {value, index, end} 或 null */
+function findLastNumber(s) {
+  const re = /[+-]?\d[\d,]*(?:\.\d+)?/g;
+  let m, last = null;
+  while ((m = re.exec(s)) !== null) {
+    const raw = m[0];
+    if (!/\d/.test(raw)) continue;
+    last = { raw, index: m.index, end: m.index + raw.length };
+  }
+  if (!last) return null;
+  const value = parseFloat(last.raw.replace(/,/g, ''));
+  if (!isFinite(value)) return null;
+  return { raw: last.raw, value, index: last.index, end: last.end };
+}
+
+/** 去掉金额后剩下的摘要：清掉结尾单位与前后标点 */
+function buildLabel(line, token) {
+  let s = line.slice(0, token.index) + line.slice(token.end);
+  return s
+    .replace(/[元块¥￥]/g, '')
+    .replace(/^[\s:：,，、\-–—]+/, '')
+    .replace(/[\s:：,，、\-–—]+$/, '')
+    .trim();
+}
+
+/**
+ * 解析整段文本（与界面语言无关）。
+ * @param {string} text
+ * @param {'out'|'in'} defaultDir 无符号数字的默认方向
+ * @returns {{items:Array, total:number, income:number, expense:number, count:number, skipped:number}}
+ */
+function parseLedger(text, defaultDir) {
+  const items = [];
+  let total = 0, income = 0, expense = 0, count = 0, skipped = 0;
+  const lines = String(text || '').split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    if (!raw.trim()) continue;
+    const line = normalize(raw);
+    const token = findLastNumber(line);
+    if (!token) {
+      skipped++;
+      items.push({ line: i + 1, label: raw.trim(), amount: null, dir: null, raw: raw.trim() });
+      continue;
+    }
+    const explicitPlus = token.raw.trim().startsWith('+');
+    const explicitMinus = token.raw.trim().startsWith('-');
+    let dir;
+    if (explicitPlus) dir = 'in';
+    else if (explicitMinus) dir = 'out';
+    else dir = defaultDir === 'in' ? 'in' : 'out';
+
+    const magnitude = Math.abs(token.value);
+    if (dir === 'in') income += magnitude; else expense += magnitude;
+    total += dir === 'in' ? magnitude : -magnitude;
+    count++;
+    items.push({
+      line: i + 1,
+      label: buildLabel(line, token),
+      amount: magnitude,
+      signed: dir === 'in' ? magnitude : -magnitude,
+      dir,
+      raw: raw.trim(),
+    });
+  }
+  return { items, total, income, expense, count, skipped };
+}
+/* --- core:end --- */
+
+/* --- i18n:start --- */
+const I18N = {
+  zh: {
+    htmlLang: 'zh-CN',
+    title: '记账分摊 · 一行一句，自动累加',
+    appTitle: '记账分摊',
+    subtitle: '每行一句话 + 一个数字，自动累加，再一键算清 AA 谁该给谁。数据只存在你这台浏览器里，不上传。',
+    dirLabel: '无符号数字算作', optOut: '支出', optIn: '收入',
+    cur: '¥',
+    demo: '填入示例', copy: '复制全部', csv: '导出 CSV', clear: '清空', save: '保存',
+    editor: '记一笔（每行一条）',
+    placeholder: '午饭 18\n地铁 6\n报销 +120\n买了一箱牛奶 59.9',
+    hint: '识别规则：取每行<b>最后一个数字</b>作为金额，其余内容当摘要。<br />支持 <code>-6</code> 支出、<code>+120</code> 收入、<code>1,200</code> 千分位、<code>59.9</code> 小数、全角数字、结尾的「元/块/¥」。<br />没有数字的行会原样保留，只是不计入合计。',
+    total: '合计（净额 = 收入 − 支出）', income: '收入', expense: '支出',
+    count: '笔数', skipped: '未识别行',
+    colDesc: '摘要', colAmount: '金额',
+    recordTitle: '记录', secCurrent: '未保存', secSaved: '已保存',
+    sumLabel: '合计（已保存净额）',
+    clearSavedConfirm: '清空全部已保存记录？此操作不可撤销。', clearedToast: '已清空全部已保存记录',
+    del: '删除', savedMeta1: '{n} 笔', savedMetaN: '{n} 笔',
+    savedToast1: '已保存 1 笔，输入区已清空', savedToastN: '已保存 {n} 笔，输入区已清空',
+    deletedToast: '已删除',
+    emptySave: '还没有内容，先写几笔再保存', saveNoNum: '这些行里都没数字，没有可保存的条目',
+    notCounted: '不计入', noNote: '（无摘要）',
+    empty: '左边写点东西试试，比如「午饭 18」。',
+    settleTitle: 'AA 结算', paidLabel: 'TA 已付',
+    settleToMe: 'TA 需付给你', settleToThem: '你需付给 TA', settleEven: '两清，谁也不用给谁',
+    fxMine: '你的净垫付', fxMineExp: '支出 {e} − 收入 {i}',
+    fxTotal: '合计已付', fxTotalExp: '你 {m} + TA {p}',
+    fxEach: '每人应承担', fxEachExp: '{t} ÷ 2',
+    fxDiff: '差额', fxDiffExp: '应承担 {e} − TA 已付 {p}',
+    footer: 'Ctrl/⌘ + S 直接导出图片 ｜ 改动即时自动保存到 localStorage',
+    copied: '已复制全部文本', copyHint: '请按 ⌘/Ctrl + C 复制', csvDone: 'CSV 已导出',
+    img: '导出图片', imgDone: '图片已保存', imgFail: '图片导出失败，换个浏览器试试',
+    export: '导出',
+    imgEmpty: '还没有可导出的记录', imgMadeAt: '生成于 {d}', imgMore: '……另有 {n} 条未在图中显示',
+    imgBrand: '记账分摊 · splitledger.app.workbuddy.host',
+    clearConfirm: '清空当前所有记录？此操作不可撤销。',
+    fileStem: '记账分摊',
+    csvHead: ['行号', '摘要', '方向', '金额'],
+    dirIn: '收入', dirOut: '支出',
+    demoText: ['午饭 18', '地铁 6', '买牛奶 59.9', '打车 23.5', '报销到账 +120', '客户打款 +1,200', '今天忘了带钱包（这行没数字，不计入）'].join('\n'),
+  },
+  en: {
+    htmlLang: 'en',
+    title: 'SplitLedger · one line, auto-summed',
+    appTitle: 'SplitLedger',
+    subtitle: 'One line per entry: a short note + a number, auto-summed — then split the bill and see who owes whom. Everything stays in your browser, nothing is uploaded.',
+    dirLabel: 'Plain numbers count as', optOut: 'Expense', optIn: 'Income',
+    cur: '$',
+    demo: 'Load sample', copy: 'Copy all', csv: 'Export CSV', clear: 'Clear', save: 'Save',
+    editor: 'Add entries (one per line)',
+    placeholder: 'Lunch 18\nSubway 6\nReimbursement +120\nA carton of milk 59.9',
+    hint: 'Rule: the <b>last number</b> in a line is the amount; everything else is the description.<br />Supports <code>-6</code> expense, <code>+120</code> income, <code>1,200</code> separators, <code>59.9</code> decimals, full-width digits, and a trailing 元/块/¥.<br />Lines with no number are kept as-is, just excluded from the totals.',
+    total: 'Total (net = income − expense)', income: 'Income', expense: 'Expense',
+    count: 'Entries', skipped: 'Unparsed lines',
+    colDesc: 'Description', colAmount: 'Amount',
+    recordTitle: 'Records', secCurrent: 'Unsaved', secSaved: 'Saved',
+    sumLabel: 'Total (saved net)',
+    clearSavedConfirm: 'Clear all saved records? This cannot be undone.', clearedToast: 'All saved records cleared',
+    del: 'Delete', savedMeta1: '{n} entry', savedMetaN: '{n} entries',
+    savedToast1: 'Saved 1 entry — the input box has been cleared', savedToastN: 'Saved {n} entries — the input box has been cleared',
+    deletedToast: 'Deleted',
+    emptySave: 'Nothing to save yet — write some entries first', saveNoNum: 'No numbers in these lines — nothing to save',
+    notCounted: 'not counted', noNote: '(no note)',
+    empty: 'Try typing something, e.g. "Lunch 18".',
+    settleTitle: 'Split the bill', paidLabel: 'They paid',
+    settleToMe: 'They pay you', settleToThem: 'You pay them', settleEven: 'All settled — nothing owed',
+    fxMine: 'Your net outlay', fxMineExp: '{e} spent − {i} received',
+    fxTotal: 'Combined paid', fxTotalExp: 'you {m} + they {p}',
+    fxEach: 'Each share', fxEachExp: '{t} ÷ 2',
+    fxDiff: 'Difference', fxDiffExp: 'share {e} − they paid {p}',
+    footer: 'Ctrl/⌘ + S exports the image · changes are saved to localStorage instantly',
+    copied: 'All text copied', copyHint: 'Press ⌘/Ctrl + C to copy', csvDone: 'CSV exported',
+    img: 'Export image', imgDone: 'Image saved', imgFail: 'Could not export the image — try another browser',
+    export: 'Export',
+    imgEmpty: 'Nothing to export yet', imgMadeAt: 'Generated {d}', imgMore: '…and {n} more not shown',
+    imgBrand: 'SplitLedger · splitledger.app.workbuddy.host',
+    clearConfirm: 'Clear all entries? This cannot be undone.',
+    fileStem: 'splitledger',
+    csvHead: ['Line', 'Description', 'Type', 'Amount'],
+    dirIn: 'Income', dirOut: 'Expense',
+    demoText: ['Lunch 18', 'Subway 6', 'Milk 59.9', 'Taxi 23.5', 'Reimbursement received +120', 'Client payment +1,200', 'Forgot my wallet today (no number, not counted)'].join('\n'),
+  },
+};
+const t = (k) => (I18N[currentLang()] || I18N.zh)[k];
+/* 语言状态由右上角的国旗按钮切换（原来是工具栏里的下拉框） */
+let curLang = 'zh';
+function currentLang() { return curLang === 'en' ? 'en' : 'zh'; }
+function syncLangUI() {
+  document.querySelectorAll('.langsw .lang').forEach((b) => {
+    const on = b.dataset.lang === curLang;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+function setLang(l) { curLang = l === 'en' ? 'en' : 'zh'; syncLangUI(); }
+/** 扫描所有 data-i18n 元素并替换文案；语言相关但不在 DOM 属性里的由 render() 处理 */
+function applyLang() {
+  const lang = currentLang();
+  document.documentElement.lang = I18N[lang].htmlLang;
+  document.title = I18N[lang].title;
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const v = I18N[lang][el.getAttribute('data-i18n')];
+    if (v !== undefined) el.textContent = v;
+  });
+  $('hint').innerHTML = I18N[lang].hint;
+  $('input').placeholder = I18N[lang].placeholder;
+  $('empty').textContent = I18N[lang].empty;
+}
+/* --- i18n:end --- */
+
+/* ------------------------------ 界面 ------------------------------ */
+const $ = (id) => document.getElementById(id);
+const input = $('input');
+const STORE_KEY = 'ledger-mini/v1';
+const fmt = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** 币种跟随界面语言：中文 ¥ / 英文 $（数字分组两者一致，只换符号；负数把负号提到符号前） */
+const money = (n) => (n < 0 ? '−' : '') + (t('cur') || '¥') + fmt.format(Math.abs(n));
+const langOf = () => currentLang();
+
+function toast(msg) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => el.classList.remove('show'), 1600);
+}
+
+function render() {
+  const r = parseLedger(input.value, $('defaultDir').value);
+
+  $('sTotal').textContent = money(r.total);
+  $('sTotal').className = 'v ' + (r.total > 0 ? 'in' : r.total < 0 ? 'out' : '');
+  $('sIn').textContent = money(r.income);
+  $('sOut').textContent = money(r.expense);
+  $('sCount').textContent = String(r.count);
+  $('sSkip').textContent = String(r.skipped);
+
+  renderRecords(r);
+  renderSettle();
+  save();
+}
+
+/** 分隔行：「未保存」/「已保存」 */
+function sectionRow(label) {
+  const tr = document.createElement('tr');
+  tr.className = 'sec';
+  const td = document.createElement('td');
+  td.colSpan = 4;
+  td.textContent = label;
+  tr.appendChild(td);
+  return tr;
+}
+
+/** 编辑区里还没保存的一行 */
+function detailRow(it) {
+  const tr = document.createElement('tr');
+  if (it.amount === null) tr.className = 'no-num';
+  const td1 = document.createElement('td');
+  td1.textContent = it.line;
+  const td2 = document.createElement('td');
+  td2.textContent = it.label || t('noNote');
+  const td3 = document.createElement('td');
+  td3.className = 'num amount';
+  if (it.amount !== null) {
+    td3.textContent = (it.dir === 'in' ? '+' : '−') + fmt.format(it.amount);
+    td3.classList.add(it.dir === 'in' ? 'in' : 'out');
+  } else {
+    td3.textContent = '—';
+  }
+  const td4 = document.createElement('td');
+  tr.append(td1, td2, td3, td4);
+  return tr;
+}
+
+/** 一条已保存的记录（本来就是一行，带删除） */
+function savedRow(it, i) {
+  const tr = document.createElement('tr');
+  tr.className = 'srow';
+
+  const td1 = document.createElement('td');
+  td1.textContent = i + 1;
+
+  const td2 = document.createElement('td');
+  const meta = document.createElement('span');
+  meta.className = 'smeta';
+  meta.textContent = fmtTime(it.at);
+  const label = document.createElement('span');
+  label.className = 'stitle';
+  label.textContent = it.label || t('noNote');
+  td2.append(meta, label);
+
+  const td3 = document.createElement('td');
+  td3.className = 'num amount ' + (it.dir === 'in' ? 'in' : 'out');
+  td3.textContent = (it.dir === 'in' ? '+' : '−') + fmt.format(it.amount || 0);
+
+  const td4 = document.createElement('td');
+  td4.className = 'ops';
+  const bDel = document.createElement('button');
+  bDel.className = 'danger';
+  bDel.textContent = t('del');
+  bDel.addEventListener('click', () => delItem(i));
+  td4.appendChild(bDel);
+
+  tr.append(td1, td2, td3, td4);
+  return tr;
+}
+
+/** 合计行：已保存所有记录的净额 + 一键清空 */
+function sumRow(amount) {
+  const tr = document.createElement('tr');
+  tr.className = 'trow';
+  const td1 = document.createElement('td');
+  td1.colSpan = 2;
+  td1.textContent = t('sumLabel');
+  const td2 = document.createElement('td');
+  td2.className = 'num amount ' + (amount > 0 ? 'in' : amount < 0 ? 'out' : '');
+  td2.textContent = (amount > 0 ? '+' : amount < 0 ? '−' : '') + fmt.format(Math.abs(amount));
+  const td3 = document.createElement('td');
+  td3.className = 'ops';
+  const bClear = document.createElement('button');
+  bClear.className = 'danger';
+  bClear.textContent = t('clear');
+  bClear.addEventListener('click', clearSaved);
+  td3.appendChild(bClear);
+  tr.append(td1, td2, td3);
+  return tr;
+}
+
+/** 清空全部已保存记录（二次确认） */
+function clearSaved() {
+  if (!saved.length) return;
+  if (!confirm(t('clearSavedConfirm'))) return;
+  saved = [];
+  persistSaved();
+  render();
+  toast(t('clearedToast'));
+}
+
+/** 一张表：上面是编辑区未保存的行，下面是已保存的记录（每条一行） */
+function renderRecords(r) {
+  const tbody = $('rows');
+  tbody.innerHTML = '';
+  const cur = r.items.filter((it) => it.amount !== null || it.raw);
+  $('empty').textContent = t('empty');
+  $('empty').style.display = cur.length || saved.length ? 'none' : 'block';
+
+  const cnt = (n, k1, kN) => t(n === 1 ? k1 : kN).replace('{n}', n);
+  if (cur.length) {
+    tbody.appendChild(sectionRow(t('secCurrent') + ' · ' + cnt(r.count, 'savedMeta1', 'savedMetaN')));
+    for (const it of cur) tbody.appendChild(detailRow(it));
+  }
+  if (saved.length) {
+    tbody.appendChild(sectionRow(t('secSaved') + ' · ' + cnt(saved.length, 'savedMeta1', 'savedMetaN')));
+    saved.forEach((it, i) => tbody.appendChild(savedRow(it, i)));
+    const sum = saved.reduce((s, x) => s + (x.dir === 'in' ? x.amount : -x.amount), 0);
+    tbody.appendChild(sumRow(sum));
+  }
+}
+
+/* ---------------------------- 结算（AA 平摊） ---------------------------- */
+/** 把输入框里的字符串解析成金额（复用全角归一化 + 末位数字规则），认不出来按 0 */
+function parseAmount(str) {
+  const tok = findLastNumber(normalize(String(str == null ? '' : str)));
+  return tok ? Math.abs(tok.value) : 0;
+}
+
+/**
+ * 结算口径：账本里记的是**我付的钱**，TA 付的那部分另外填（TA 已付），
+ * 两者都算进共同开销，再 AA 平摊。
+ *   mine  = 支出 − 收入        我这一方的净垫付
+ *   paid  = TA 已付            TA 垫的部分（也计入总数、同样要 ÷2）
+ *   total = mine + paid        两人合计已付
+ *   each  = total ÷ 2          每人应承担
+ *   diff  = each − paid        >0 → TA 补给我；<0 → 我补给 TA
+ *          （等价于 (mine − paid) ÷ 2：谁垫得多谁收钱）
+ */
+function settleData() {
+  let income = 0, expense = 0;
+  for (const x of saved) {
+    if (x.dir === 'in') income += x.amount; else expense += x.amount;
+  }
+  const mine = expense - income;
+  const paid = parseAmount($('paidOther').value);
+  const total = mine + paid;
+  const each = total / 2;
+  return { income, expense, mine, paid, total, each, diff: each - paid };
+}
+
+function renderSettle() {
+  $('settle').style.display = saved.length ? '' : 'none';
+  if (!saved.length) return;
+
+  const s = settleData();
+  const even = Math.abs(s.diff) < 0.005;   // 半分钱以内算两清，避开浮点误差
+
+  const out = $('settleOut');
+  out.className = 'settle-out ' + (even ? '' : s.diff > 0 ? 'in' : 'out');
+  out.innerHTML = '';
+  const lb = document.createElement('span');
+  lb.className = 'so-label';
+  lb.textContent = even ? t('settleEven') : s.diff > 0 ? t('settleToMe') : t('settleToThem');
+  out.appendChild(lb);
+  if (!even) {
+    const am = document.createElement('span');
+    am.className = 'so-amt';
+    am.textContent = money(Math.abs(s.diff));
+    out.appendChild(am);
+  }
+
+  const rows = [
+    [t('fxMine'), money(s.mine), t('fxMineExp').replace('{e}', money(s.expense)).replace('{i}', money(s.income))],
+    [t('fxTotal'), money(s.total), t('fxTotalExp').replace('{m}', money(s.mine)).replace('{p}', money(s.paid))],
+    [t('fxEach'), money(s.each), t('fxEachExp').replace('{t}', money(s.total))],
+    [t('fxDiff'), money(Math.abs(s.diff)), t('fxDiffExp').replace('{e}', money(s.each)).replace('{p}', money(s.paid))],
+  ];
+  const fx = $('settleFx');
+  fx.innerHTML = '';
+  for (const [k, v, exp] of rows) {
+    const row = document.createElement('div');
+    row.className = 'fx-row';
+    const a = document.createElement('span'); a.className = 'fx-k'; a.textContent = k;
+    const b = document.createElement('span'); b.className = 'fx-v'; b.textContent = v;
+    const c = document.createElement('span'); c.className = 'fx-exp'; c.textContent = '= ' + exp;
+    row.append(a, b, c);
+    fx.appendChild(row);
+  }
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      text: input.value, dir: $('defaultDir').value, lang: langOf(), paid: $('paidOther').value,
+    }));
+  } catch (e) { /* 隐私模式下忽略 */ }
+}
+function load() {
+  let draft = null;
+  try { draft = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { /* 忽略 */ }
+  if (draft && typeof draft.text === 'string') {
+    input.value = draft.text;
+    if (draft.dir) $('defaultDir').value = draft.dir;
+    if (draft.lang) setLang(draft.lang);
+    if (draft.paid) $('paidOther').value = draft.paid;
+  } else {
+    // 首次访问：跟随浏览器语言
+    const nav = (navigator.language || '').toLowerCase();
+    setLang(nav.startsWith('en') ? 'en' : 'zh');
+  }
+}
+
+/* ---------------------------- 已保存快照 ---------------------------- */
+const SAVED_KEY = 'ledger-mini/saved/v1';
+let saved = [];
+
+function loadSaved() {
+  let raw = [];
+  try {
+    const v = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]');
+    raw = Array.isArray(v) ? v : [];
+  } catch (e) { raw = []; }
+
+  const out = [];
+  for (const x of raw) {
+    if (!x) continue;
+    if (typeof x.label === 'string' && typeof x.amount === 'number') {
+      // 现行格式：一条 = 编辑区里的一行
+      out.push({ at: x.at || Date.now(), label: x.label, amount: x.amount, dir: x.dir === 'in' ? 'in' : 'out' });
+    } else if (typeof x.text === 'string') {
+      // 旧格式：一次保存一整批 → 展开成逐条，避免历史数据被丢掉
+      const r = parseLedger(x.text, x.dir || 'out');
+      const at = x.at || Date.now();
+      for (const it of r.items) {
+        if (it.amount === null) continue;
+        out.push({ at, label: it.label, amount: it.amount, dir: it.dir });
+      }
+    }
+  }
+  saved = out;
+}
+function persistSaved() {
+  try { localStorage.setItem(SAVED_KEY, JSON.stringify(saved)); } catch (e) { /* 隐私模式下忽略 */ }
+}
+/** 时间戳 → 本地化短日期（跟随界面语言，统一用 24 小时制：中英格式一致且更省宽度） */
+function fmtTime(ts) {
+  const loc = currentLang() === 'en' ? 'en-US' : 'zh-CN';
+  try {
+    return new Date(ts).toLocaleString(loc, {
+      month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+  } catch (e) { return ''; }
+}
+
+/** 保存：把编辑区内容按行拆成一条条记录（新的排在最上面），存完清空编辑区 */
+function saveItem() {
+  if (!input.value.trim()) { toast(t('emptySave')); input.focus(); return; }
+  const r = parseLedger(input.value, $('defaultDir').value);
+  const at = Date.now();
+  const batch = r.items
+    .filter((x) => x.amount !== null)
+    .map((x) => ({ at, label: x.label, amount: x.amount, dir: x.dir }));
+
+  if (!batch.length) { toast(t('saveNoNum')); input.focus(); return; }
+  saved = batch.concat(saved);
+  persistSaved();
+  input.value = '';
+  render();
+  toast(t(batch.length === 1 ? 'savedToast1' : 'savedToastN').replace('{n}', batch.length));
+}
+
+function delItem(i) {
+  if (!saved[i]) return;
+  saved.splice(i, 1);
+  persistSaved();
+  render();
+  toast(t('deletedToast'));
+}
+/* ------------------------------------------------------------------- */
+
+/* ---------------------------- 导出图片 ---------------------------- */
+/* 把「记录 + AA 结算」画成一张长图 PNG：宽度固定 720 逻辑像素，
+   配色直接读当前主题的 CSS 变量（所以浅色/深色都跟着走）。 */
+const IMG_W = 720, IMG_PAD = 36;
+const IMG_FONT = '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif';
+const imgFont = (size, weight) => (weight || 400) + ' ' + size + 'px ' + IMG_FONT;
+
+function roundRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+
+/** 按当前字体截断文本，超出宽度用 … 收尾（调用前必须先设好 c.font） */
+function clipText(c, s, maxW) {
+  s = String(s == null ? '' : s);
+  if (c.measureText(s).width <= maxW) return s;
+  let lo = 0, hi = s.length;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (c.measureText(s.slice(0, mid) + '…').width <= maxW) lo = mid; else hi = mid - 1;
+  }
+  return s.slice(0, lo) + '…';
+}
+
+function exportImage() {
+  const r = parseLedger(input.value, $('defaultDir').value);
+  const cur = r.items.filter((it) => it.amount !== null);
+  const hasSaved = saved.length > 0;
+  if (!cur.length && !hasSaved) { toast(t('imgEmpty')); return; }
+
+  const cs = getComputedStyle(document.documentElement);
+  const cssVar = (k, fb) => (cs.getPropertyValue(k) || '').trim() || fb;
+  const C = {
+    page: cssVar('--bg', '#f4f5f7'), card: cssVar('--card', '#ffffff'),
+    text: cssVar('--text', '#1f2328'), muted: cssVar('--muted', '#6b7280'),
+    border: cssVar('--border', '#e3e6ea'), inc: cssVar('--in', '#0f9d58'), outc: cssVar('--out', '#d92d20'),
+  };
+  const W = IMG_W, PAD = IMG_PAD, CW = W - PAD * 2, RX = W - PAD;
+
+  const MAX_ROWS = 200;                       // 超长账本只画最近 200 条，尾部注明
+  const shown = saved.slice(0, MAX_ROWS);
+  const rest = saved.length - shown.length;
+  const savedIncome = saved.reduce((a, x) => a + (x.dir === 'in' ? x.amount : 0), 0);
+  const savedExpense = saved.reduce((a, x) => a + (x.dir === 'out' ? x.amount : 0), 0);
+  const savedSum = savedIncome - savedExpense;
+  // 图上那张合计卡的口径 = 图内全部行（未保存 + 已保存）。
+  // 页面顶部的卡片只看编辑区，保存后就是 0 —— 直接搬过来会和下面的明细自相矛盾。
+  const gIncome = r.income + savedIncome;
+  const gExpense = r.expense + savedExpense;
+  const gCount = cur.length + saved.length;
+  const gTotal = gIncome - gExpense;
+  const s2 = hasSaved ? settleData() : null;
+  const cnt = (n) => t(n === 1 ? 'savedMeta1' : 'savedMetaN').replace('{n}', n);
+
+  // 先按逻辑坐标排块（每块自带高度与绘制函数），再据此定画布尺寸
+  const blocks = [];
+  const add = (h, draw) => blocks.push({ h, draw });
+
+  add(28, (c, y) => { c.font = imgFont(22, 700); c.fillStyle = C.text; c.fillText(t('appTitle'), PAD, y + 21); });
+  add(22, (c, y) => { c.font = imgFont(12); c.fillStyle = C.muted; c.fillText(t('imgMadeAt').replace('{d}', fmtTime(Date.now())), PAD, y + 13); });
+  add(10, () => {});
+
+  add(118, (c, y) => {
+    roundRect(c, PAD, y, CW, 118, 12);
+    c.fillStyle = C.card; c.fill();
+    c.strokeStyle = C.border; c.lineWidth = 1; c.stroke();
+    c.font = imgFont(12); c.fillStyle = C.muted;
+    c.fillText(t('total'), PAD + 20, y + 32);
+    c.font = imgFont(30, 700);
+    c.fillStyle = gTotal > 0 ? C.inc : gTotal < 0 ? C.outc : C.text;
+    c.fillText(money(gTotal), PAD + 20, y + 78);
+    c.textAlign = 'right';
+    const line = (i, k, val, col) => {
+      c.font = imgFont(13); c.fillStyle = C.muted;
+      c.fillText(k, RX - 138, y + 32 + i * 28);
+      c.fillStyle = col;
+      c.fillText(val, RX - 20, y + 32 + i * 28);
+    };
+    line(0, t('income'), money(gIncome), C.inc);
+    line(1, t('expense'), money(gExpense), C.outc);
+    line(2, t('count'), String(gCount), C.text);
+    c.textAlign = 'left';
+  });
+  add(18, () => {});
+
+  add(22, (c, y) => { c.font = imgFont(13, 600); c.fillStyle = C.muted; c.fillText(t('recordTitle'), PAD, y + 14); });
+  add(26, () => {});
+
+  const drawRow = (c, y, left, label, amount, dir) => {
+    c.font = imgFont(12); c.fillStyle = C.muted;
+    c.fillText(clipText(c, left, 96), PAD, y + 21);
+    c.font = imgFont(13); c.fillStyle = C.text;
+    c.fillText(clipText(c, label, CW - 104 - 126), PAD + 104, y + 21);
+    c.textAlign = 'right';
+    c.font = imgFont(13, 600); c.fillStyle = dir === 'in' ? C.inc : C.outc;
+    c.fillText((dir === 'in' ? '+' : '−') + fmt.format(amount || 0), RX, y + 21);
+    c.textAlign = 'left';
+    c.strokeStyle = C.border; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(PAD, y + 31.5); c.lineTo(RX, y + 31.5); c.stroke();
+  };
+  const drawSec = (label) => (c, y) => { c.font = imgFont(11, 600); c.fillStyle = C.muted; c.fillText(label, PAD, y + 16); };
+
+  if (cur.length) {
+    add(26, drawSec(t('secCurrent') + ' · ' + cnt(cur.length)));
+    cur.forEach((it, i) => add(32, (c, y) => drawRow(c, y, '#' + (i + 1), it.label || t('noNote'), it.amount, it.dir)));
+  }
+  if (hasSaved) {
+    add(26, drawSec(t('secSaved') + ' · ' + cnt(saved.length)));
+    shown.forEach((it) => add(32, (c, y) => drawRow(c, y, fmtTime(it.at), it.label || t('noNote'), it.amount, it.dir)));
+    if (rest > 0) add(22, (c, y) => { c.font = imgFont(11); c.fillStyle = C.muted; c.fillText(t('imgMore').replace('{n}', rest), PAD, y + 13); });
+    // 有未保存行时，卡片合计含草稿，这里补一个「已保存净额」小节合计给 AA 对照；否则与卡片重复，省略
+    if (cur.length) add(44, (c, y) => {
+      c.font = imgFont(12); c.fillStyle = C.muted;
+      c.fillText(t('sumLabel'), PAD, y + 27);
+      c.textAlign = 'right';
+      c.font = imgFont(15, 700);
+      c.fillStyle = savedSum > 0 ? C.inc : savedSum < 0 ? C.outc : C.text;
+      c.fillText((savedSum > 0 ? '+' : savedSum < 0 ? '−' : '') + fmt.format(Math.abs(savedSum)), RX, y + 27);
+      c.textAlign = 'left';
+    });
+  }
+
+  if (s2) {
+    const even = Math.abs(s2.diff) < 0.005;
+    add(12, () => {});
+    add(30, (c, y) => {
+      c.strokeStyle = C.border; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(PAD, y + 0.5); c.lineTo(RX, y + 0.5); c.stroke();
+      c.font = imgFont(13, 600); c.fillStyle = C.muted;
+      c.fillText(t('settleTitle'), PAD, y + 24);
+    });
+    add(42, (c, y) => {
+      c.font = imgFont(12); c.fillStyle = C.muted;
+      c.fillText(even ? t('settleEven') : s2.diff > 0 ? t('settleToMe') : t('settleToThem'), PAD, y + 24);
+      if (!even) {
+        c.textAlign = 'right';
+        c.font = imgFont(20, 700); c.fillStyle = s2.diff > 0 ? C.inc : C.outc;
+        c.fillText(money(Math.abs(s2.diff)), RX, y + 27);
+        c.textAlign = 'left';
+      }
+    });
+    const fx = [
+      [t('fxMine'), money(s2.mine), t('fxMineExp').replace('{e}', money(s2.expense)).replace('{i}', money(s2.income))],
+      [t('fxTotal'), money(s2.total), t('fxTotalExp').replace('{m}', money(s2.mine)).replace('{p}', money(s2.paid))],
+      [t('fxEach'), money(s2.each), t('fxEachExp').replace('{t}', money(s2.total))],
+      [t('fxDiff'), money(Math.abs(s2.diff)), t('fxDiffExp').replace('{e}', money(s2.each)).replace('{p}', money(s2.paid))],
+    ];
+    fx.forEach(([k, val, exp]) => add(42, (c, y) => {
+      c.font = imgFont(12); c.fillStyle = C.muted;
+      c.fillText(k, PAD, y + 14);
+      c.textAlign = 'right';
+      c.font = imgFont(13, 600); c.fillStyle = C.text;
+      c.fillText(val, RX, y + 14);
+      c.textAlign = 'left';
+      c.font = imgFont(11); c.fillStyle = C.muted;
+      c.fillText(clipText(c, '= ' + exp, CW), PAD, y + 33);
+    }));
+  }
+
+  add(18, () => {});
+  add(26, (c, y) => { c.textAlign = 'center'; c.font = imgFont(11); c.fillStyle = C.muted; c.fillText(t('imgBrand'), W / 2, y + 12); c.textAlign = 'left'; });
+
+  const H = IMG_PAD + blocks.reduce((a, b) => a + b.h, 0) + IMG_PAD;
+  // iOS Safari 有画布面积上限（约 16.7M px），长图按面积反推像素比，宁软不秃
+  const MAX_AREA = 12e6;
+  const scale = Math.max(1, Math.min(2, window.devicePixelRatio || 1, Math.sqrt(MAX_AREA / (W * H))));
+
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(W * scale);
+  cv.height = Math.round(H * scale);
+  const c = cv.getContext('2d');
+  c.scale(scale, scale);
+  c.fillStyle = C.page; c.fillRect(0, 0, W, H);
+  c.textBaseline = 'alphabetic';
+  let y = IMG_PAD;
+  for (const b of blocks) { b.draw(c, y); y += b.h; }
+
+  cv.toBlob((blob) => {
+    if (!blob) { toast(t('imgFail')); return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = t('fileStem') + '-' + new Date().toISOString().slice(0, 10) + '.png';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(t('imgDone'));
+  }, 'image/png');
+}
+
+input.addEventListener('input', render);
+$('paidOther').addEventListener('input', () => { renderSettle(); save(); });
+$('defaultDir').addEventListener('change', render);
+document.querySelectorAll('.langsw .lang').forEach((b) => {
+  b.addEventListener('click', () => { setLang(b.dataset.lang); applyLang(); render(); });
+});
+$('btnDemo').addEventListener('click', () => {
+  input.value = t('demoText');
+  render();
+  input.focus();
+});
+$('btnSave').addEventListener('click', saveItem);
+$('btnCopy').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(input.value);
+    toast(t('copied'));
+  } catch (e) {
+    input.select();
+    toast(t('copyHint'));
+  }
+});
+/** 导出 CSV（菜单项「导出 CSV」用） */
+function exportCsv() {
+  const r = parseLedger(input.value, $('defaultDir').value);
+  const head = t('csvHead');
+  const body = r.items
+    .filter((it) => it.amount !== null)
+    .map((it) => [it.line, it.label || t('noNote'), it.dir === 'in' ? t('dirIn') : t('dirOut'), it.amount.toFixed(2)]);
+  const csv = [head, ...body].map((row) => row.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = t('fileStem') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(t('csvDone'));
+}
+
+/* ------------------------- 导出菜单（图片 / CSV） ------------------------- */
+const menuEl = $('exportMenu');
+const menuOpen = () => menuEl.classList.contains('open');
+function setMenu(on) {
+  menuEl.classList.toggle('open', on);
+  $('exportDrop').classList.toggle('open', on);
+  $('btnExport').setAttribute('aria-expanded', on ? 'true' : 'false');
+}
+$('btnExport').addEventListener('click', () => setMenu(!menuOpen()));
+$('menuImg').addEventListener('click', () => { setMenu(false); exportImage(); });
+$('menuCsv').addEventListener('click', () => { setMenu(false); exportCsv(); });
+// 点空白处 / Esc 关掉菜单（菜单项在 #exportDrop 里，不会被这条误关）
+document.addEventListener('click', (e) => { if (menuOpen() && !$('exportDrop').contains(e.target)) setMenu(false); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && menuOpen()) { setMenu(false); $('btnExport').focus(); }
+});
+$('btnClear').addEventListener('click', () => {
+  if (!input.value.trim() || confirm(t('clearConfirm'))) {
+    input.value = '';
+    render();
+    input.focus();
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    exportImage();
+  }
+});
+
+load();
+loadSaved();
+applyLang();
+render();
+</script>
+</body>
+</html>
