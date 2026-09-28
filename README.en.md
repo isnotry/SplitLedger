@@ -12,7 +12,7 @@
 
 ![Screenshot](https://cdn.jsdelivr.net/gh/isnotry/SplitLedger@main/docs/screenshot-en.png)
 
-**[Use it online](https://splitledger.app.workbuddy.host/)**
+**[Use it online](https://splitledger.app.workbuddy.host/)** | **[GitHub Pages mirror](https://isnotry.github.io/SplitLedger/)**
 
 ---
 
@@ -38,7 +38,7 @@ The web app is a **single file** (`web/index.html`, HTML / CSS / JS all inlined)
 
 ### Use it online
 
-Click **[Use it online](https://splitledger.app.workbuddy.host/)** to open it — no install, no sign-up.
+Click **[Use it online](https://splitledger.app.workbuddy.host/)** to open it — no install, no sign-up. If that doesn't load, try the **[GitHub Pages mirror](https://isnotry.github.io/SplitLedger/)** — the same single-file app, just hosted somewhere else.
 
 ### Run it locally
 
@@ -107,6 +107,7 @@ Difference       diff  = each − they paid     (always (mine − they paid) ÷ 
 ## Data & privacy
 
 - Everything stays in your browser. No upload, no network calls, no account. Switching browsers or clearing your cache means starting a new ledger.
+- The two online entries above are **two different sites** (different domains), and storage is scoped per site — switching entries means starting a new ledger; your existing records do not follow you.
 - Storage locations (`localStorage`):
 
 | Key                    | Contents                                                                |
@@ -125,6 +126,9 @@ splitledger/
 ├── docs/
 │   ├── screenshot.png          # Chinese UI
 │   └── screenshot-en.png       # English UI
+├── .github/
+│   └── workflows/
+│       └── pages.yml           # Publishes web/ to GitHub Pages on push to main
 ├── README.md                   # Chinese docs (default)
 ├── README.en.md                # English docs
 └── LICENSE                     # MIT license
@@ -135,6 +139,7 @@ splitledger/
 - The web app has **no build and no dependencies**: edit `web/index.html` and refresh the browser.
 - Both language tables live in the same `I18N` object (`zh` / `en`); the two key sets must stay **strictly aligned**, so update both when you change wording.
 - The exported long image renders at most 200 detail rows; beyond that it appends "…and N more not shown".
+- Pushing to `main` publishes `web/` as-is to GitHub Pages via `.github/workflows/pages.yml` (the repo's Pages source must be set to **GitHub Actions**). `web/` is already a complete site, so **no build step is involved**.
 
 ## Browser support
 
