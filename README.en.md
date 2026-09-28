@@ -142,4 +142,4 @@ Modern Chrome / Edge / Safari / Firefox. The long-image export uses Canvas and d
 
 ## License
 
-[MIT](LICENSE) © 2026 kingsir
+[MIT](LICENSE) © 2026 isnotry
