@@ -1,5 +1,8 @@
 name: Deploy to GitHub Pages
 
+# 前置条件（只需设一次）：仓库 Settings → Pages → Build and deployment →
+# Source 必须是下拉框的「GitHub Actions」那一项。选成「Deploy from a branch」
+# 会得到 build_type: legacy，本站点各步里的 deploy-pages 会一直失败。
 on:
   push:
     branches: [main]
