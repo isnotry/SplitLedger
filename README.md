@@ -12,7 +12,7 @@
 
 ![界面截图](https://cdn.jsdelivr.net/gh/isnotry/SplitLedger@main/docs/screenshot.png)
 
-**[在线使用](https://splitledger.app.workbuddy.host/)**
+**[在线使用](https://splitledger.app.workbuddy.host/)** ｜ **[GitHub Pages 镜像](https://isnotry.github.io/SplitLedger/)**
 
 ---
 
@@ -38,7 +38,7 @@
 
 ### 在线使用
 
-点击 **[在线使用](https://splitledger.app.workbuddy.host/)** 即可打开，无需安装、不用注册。
+点击 **[在线使用](https://splitledger.app.workbuddy.host/)** 即可打开，无需安装、不用注册；打不开时换 **[GitHub Pages 镜像](https://isnotry.github.io/SplitLedger/)** —— 同一份单文件应用，只是换个地方托管。
 
 ### 本地使用
 
@@ -107,6 +107,7 @@ cd web && python3 -m http.server 8080
 ## 数据与隐私
 
 - 数据**只存本机浏览器**，不上传、不联网、无账号。换浏览器或清缓存 = 换一本账。
+- 上面两个在线入口是**两个不同的站点**（域名不同），账本按站点隔离 —— 换入口就是换一本账，原有记录不会跟过去。
 - 存储位置（`localStorage`）：
 
 | Key | 内容 |
@@ -125,6 +126,9 @@ splitledger/
 ├── docs/
 │   ├── screenshot.png          # 中文界面截图
 │   └── screenshot-en.png       # 英文界面截图
+├── .github/
+│   └── workflows/
+│       └── pages.yml           # 推到 main 时把 web/ 自动发布到 GitHub Pages
 ├── README.md                   # 中文说明（默认）
 ├── README.en.md                # 英文说明
 └── LICENSE                     # MIT 许可证
@@ -135,6 +139,7 @@ splitledger/
 - 网页端**没有构建、没有依赖**：改完 `web/index.html` 刷新浏览器即可。
 - 中英词条在同一个 `I18N` 对象里（`zh` / `en`），两份 key 必须**严格对齐**，改文案两边同步。
 - 导出的长图最多画 200 行明细，超出会在图尾标注「另有 N 条未在图中显示」。
+- 推到 `main` 后，`.github/workflows/pages.yml` 会把 `web/` 原样发布到 GitHub Pages（仓库的 Pages 源需设为 **GitHub Actions**）。`web/` 本身就是完整站点，**不需要任何构建**。
 
 ## 浏览器支持
 
