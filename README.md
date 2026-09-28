@@ -142,4 +142,4 @@ Chrome / Edge / Safari / Firefox 等现代浏览器。导出长图基于 Canvas�
 
 ## 许可
 
-[MIT](LICENSE) © 2026 kingsir
+[MIT](LICENSE) © 2026 isnotry
