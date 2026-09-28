@@ -3,20 +3,14 @@
 [简体中文](README.md) | **English**
 
 ![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
-
 ![no build](https://img.shields.io/badge/build-none-blue)
-
-
-
 ![single file](https://img.shields.io/badge/web-1%20file-lightgrey)
-
 ![local-only data](https://img.shields.io/badge/data-local--only-orange)
-
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 
 > One line, one number, one entry. Amounts are parsed automatically, totals update live, and splitting the bill tells you exactly who owes whom.
 
-![Screenshot](docs/screenshot-en.png)
+![Screenshot](https://cdn.jsdelivr.net/gh/isnotry/SplitLedger@main/docs/screenshot-en.png)
 
 **[Use it online](https://splitledger.app.workbuddy.host/)**
 

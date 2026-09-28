@@ -10,7 +10,7 @@
 
 > 一行一句话 + 一个数字就是一笔账。自动识别金额、实时合计，再一键算清 AA 谁该给谁。
 
-![界面截图](docs/screenshot.png)
+![界面截图](https://cdn.jsdelivr.net/gh/isnotry/SplitLedger@main/docs/screenshot.png)
 
 **[在线使用](https://splitledger.app.workbuddy.host/)**
 
