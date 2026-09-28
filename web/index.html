@@ -156,6 +156,11 @@
   td.ops { text-align: right; white-space: nowrap; }
   td.ops button { height: 24px; padding: 2px 8px; font-size: 12px; }
   footer { margin-top: 18px; font-size: 12px; color: var(--muted); text-align: center; }
+  .footlink {
+    display: inline-block; margin-top: 4px; color: var(--muted);
+    text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 2px;
+  }
+  .footlink:hover { color: var(--text); text-decoration-color: var(--text); }
   .toast {
     position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(8px);
     background: var(--text); color: var(--card); padding: 8px 16px; border-radius: 8px;
@@ -222,6 +227,7 @@
     button:hover, select:hover { border-color: var(--border); color: var(--text); }
     button.primary:hover { filter: none; }
     .menu button:hover { background: transparent; }
+    .footlink:hover { color: var(--muted); text-decoration-color: var(--border); }
   }
 </style>
 </head>
@@ -304,7 +310,7 @@
     </div>
   </div>
 
-  <footer data-i18n="footer" data-page-node-id="YSil29v6YHNVVRTwhhF9E2">Ctrl/⌘ + S 直接导出图片 ｜ 改动即时自动保存到 localStorage</footer>
+  <footer data-page-node-id="YSil29v6YHNVVRTwhhF9E2"><span data-i18n="footer">Ctrl/⌘ + S 直接导出图片 ｜ 改动即时自动保存到 localStorage</span><br /><a class="footlink" href="https://github.com/isnotry/SplitLedger" target="_blank" rel="noopener noreferrer" data-i18n="repoLink">GitHub 开源仓库</a></footer>
 </div>
 <div class="toast" id="toast" data-page-node-id="Ng7kss1OSBlzPGPQFtiGax"></div>
 
@@ -421,6 +427,7 @@ const I18N = {
     fxEach: '每人应承担', fxEachExp: '{t} ÷ 2',
     fxDiff: '差额', fxDiffExp: '应承担 {e} − TA 已付 {p}',
     footer: 'Ctrl/⌘ + S 直接导出图片 ｜ 改动即时自动保存到 localStorage',
+    repoLink: 'GitHub 开源仓库',
     copied: '已复制全部文本', copyHint: '请按 ⌘/Ctrl + C 复制', csvDone: 'CSV 已导出',
     img: '导出图片', imgDone: '图片已保存', imgFail: '图片导出失败，换个浏览器试试',
     export: '导出',
@@ -462,6 +469,7 @@ const I18N = {
     fxEach: 'Each share', fxEachExp: '{t} ÷ 2',
     fxDiff: 'Difference', fxDiffExp: 'share {e} − they paid {p}',
     footer: 'Ctrl/⌘ + S exports the image · changes are saved to localStorage instantly',
+    repoLink: 'Open source on GitHub',
     copied: 'All text copied', copyHint: 'Press ⌘/Ctrl + C to copy', csvDone: 'CSV exported',
     img: 'Export image', imgDone: 'Image saved', imgFail: 'Could not export the image — try another browser',
     export: 'Export',
