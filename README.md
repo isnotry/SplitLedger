@@ -12,7 +12,7 @@
 
 ![界面截图](https://cdn.jsdelivr.net/gh/isnotry/SplitLedger@main/docs/screenshot.png)
 
-**[在线使用](https://splitledger.app.workbuddy.host/)** ｜ **[GitHub Pages 镜像](https://isnotry.github.io/SplitLedger/)**
+**[在线使用](https://isnotry.github.io/SplitLedger/)**
 
 ---
 
@@ -38,7 +38,7 @@
 
 ### 在线使用
 
-点击 **[在线使用](https://splitledger.app.workbuddy.host/)** 即可打开，无需安装、不用注册；打不开时换 **[GitHub Pages 镜像](https://isnotry.github.io/SplitLedger/)** —— 同一份单文件应用，只是换个地方托管。
+点击 **[在线使用](https://isnotry.github.io/SplitLedger/)** 即可打开，无需安装、不用注册。
 
 ### 本地使用
 

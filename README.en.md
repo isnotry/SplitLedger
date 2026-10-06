@@ -12,7 +12,7 @@
 
 ![Screenshot](https://cdn.jsdelivr.net/gh/isnotry/SplitLedger@main/docs/screenshot-en.png)
 
-**[Use it online](https://splitledger.app.workbuddy.host/)** | **[GitHub Pages mirror](https://isnotry.github.io/SplitLedger/)**
+**[Use it online](https://isnotry.github.io/SplitLedger/)**
 
 ---
 
@@ -38,7 +38,7 @@ The web app is a **single file** (`web/index.html`, HTML / CSS / JS all inlined)
 
 ### Use it online
 
-Click **[Use it online](https://splitledger.app.workbuddy.host/)** to open it — no install, no sign-up. If that doesn't load, try the **[GitHub Pages mirror](https://isnotry.github.io/SplitLedger/)** — the same single-file app, just hosted somewhere else.
+Click **[Use it online](https://isnotry.github.io/SplitLedger/)** to open it — no install, no sign-up.
 
 ### Run it locally
 
